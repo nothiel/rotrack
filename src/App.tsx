@@ -141,6 +141,39 @@ export default function App() {
     }
   }
 
+  function handleExport() {
+    const data = JSON.stringify({ profiles, events, activeProfileId }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rotrack-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleImport(json: string) {
+    try {
+      const data = JSON.parse(json);
+      if (!data.events || !Array.isArray(data.events)) {
+        alert('Invalid backup file.');
+        return;
+      }
+      if (!window.confirm('This will replace all your current data. Continue?')) return;
+      if (data.profiles && Array.isArray(data.profiles)) {
+        setProfiles(data.profiles);
+        saveProfiles(data.profiles);
+      }
+      const profileId = data.activeProfileId || activeProfileId;
+      setActiveProfileId(profileId);
+      saveActiveProfileId(profileId);
+      setEvents(data.events);
+      saveEvents(profileId, data.events);
+    } catch {
+      alert('Could not read the file. Make sure it\'s a valid ROTrack backup.');
+    }
+  }
+
   function handleToday() {
     setCurrentDate(new Date());
   }
@@ -227,6 +260,8 @@ export default function App() {
           onNavigate={handleNavigate}
           onToday={handleToday}
           onClearAll={handleClearAll}
+          onExport={handleExport}
+          onImport={handleImport}
         />
       </div>
       <main className="calendar-container">

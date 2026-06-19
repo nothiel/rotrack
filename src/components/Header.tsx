@@ -7,6 +7,8 @@ interface HeaderProps {
   onNavigate: (direction: -1 | 1) => void;
   onToday: () => void;
   onClearAll: () => void;
+  onExport: () => void;
+  onImport: (json: string) => void;
 }
 
 const MONTH_NAMES = [
@@ -24,7 +26,7 @@ function getWeekRange(date: Date): string {
   return `${fmt(start)} – ${fmt(end)}, ${end.getFullYear()}`;
 }
 
-export default function Header({ currentDate, view, onViewChange, onNavigate, onToday, onClearAll }: HeaderProps) {
+export default function Header({ currentDate, view, onViewChange, onNavigate, onToday, onClearAll, onExport, onImport }: HeaderProps) {
   const title = view === 'month'
     ? `${MONTH_NAMES[currentDate.getMonth()]} ${currentDate.getFullYear()}`
     : getWeekRange(currentDate);
@@ -37,6 +39,23 @@ export default function Header({ currentDate, view, onViewChange, onNavigate, on
         <button className="btn btn-icon" onClick={() => onNavigate(1)}>›</button>
         <h1 className="header-title">{title}</h1>
         <button className="btn btn-danger" onClick={onClearAll}>Clear All</button>
+        <button className="btn" onClick={onExport}>Export</button>
+        <label className="btn" style={{ cursor: 'pointer' }}>
+          Import
+          <input
+            type="file"
+            accept=".json"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = () => onImport(reader.result as string);
+              reader.readAsText(file);
+              e.target.value = '';
+            }}
+          />
+        </label>
       </div>
       <div className="header-right">
         <div className="view-toggle">
