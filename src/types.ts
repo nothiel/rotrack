@@ -5,6 +5,7 @@ export interface InstanceEvent {
   date: string;
   time: string;
   repeatDays: number;
+  repeatEndDate?: string;
   completedDates: string[];
 }
 

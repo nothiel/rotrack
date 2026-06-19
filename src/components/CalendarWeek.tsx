@@ -7,6 +7,7 @@ interface CalendarWeekProps {
   onDayClick: (date: string) => void;
   onEventClick: (event: InstanceEvent) => void;
   onToggleComplete: (event: InstanceEvent, date: string) => void;
+  onReschedule: (event: InstanceEvent, newDate: string) => void;
 }
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -23,7 +24,7 @@ function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-export default function CalendarWeek({ currentDate, events, onDayClick, onEventClick, onToggleComplete }: CalendarWeekProps) {
+export default function CalendarWeek({ currentDate, events, onDayClick, onEventClick, onToggleComplete, onReschedule }: CalendarWeekProps) {
   const today = new Date();
   const weekStart = new Date(currentDate);
   weekStart.setDate(weekStart.getDate() - weekStart.getDay());
@@ -49,6 +50,18 @@ export default function CalendarWeek({ currentDate, events, onDayClick, onEventC
             key={iso}
             className={`week-day-column ${isToday ? 'today' : ''}`}
             onClick={() => onDayClick(iso)}
+            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }}
+            onDragLeave={(e) => { e.currentTarget.classList.remove('drag-over'); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.currentTarget.classList.remove('drag-over');
+              try {
+                const data = JSON.parse(e.dataTransfer.getData('application/json'));
+                if (data.event && data.displayDate !== iso && data.event.repeatDays > 0) {
+                  onReschedule(data.event, iso);
+                }
+              } catch {}
+            }}
           >
             <div className="week-day-header">
               <span className="week-day-name">{DAY_NAMES[day.getDay()]}</span>
@@ -61,7 +74,7 @@ export default function CalendarWeek({ currentDate, events, onDayClick, onEventC
                 <div className="week-empty">No events</div>
               )}
               {dayEvents.map((ev) => (
-                <EventCard key={ev.id} event={ev} displayDate={iso} onClick={onEventClick} onToggleComplete={onToggleComplete} />
+                <EventCard key={ev.id} event={ev} displayDate={iso} onClick={onEventClick} onToggleComplete={onToggleComplete} onReschedule={onReschedule} />
               ))}
             </div>
           </div>

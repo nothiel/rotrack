@@ -6,6 +6,7 @@ interface HeaderProps {
   onViewChange: (view: CalendarView) => void;
   onNavigate: (direction: -1 | 1) => void;
   onToday: () => void;
+  onClearAll: () => void;
 }
 
 const MONTH_NAMES = [
@@ -23,7 +24,7 @@ function getWeekRange(date: Date): string {
   return `${fmt(start)} – ${fmt(end)}, ${end.getFullYear()}`;
 }
 
-export default function Header({ currentDate, view, onViewChange, onNavigate, onToday }: HeaderProps) {
+export default function Header({ currentDate, view, onViewChange, onNavigate, onToday, onClearAll }: HeaderProps) {
   const title = view === 'month'
     ? `${MONTH_NAMES[currentDate.getMonth()]} ${currentDate.getFullYear()}`
     : getWeekRange(currentDate);
@@ -35,6 +36,7 @@ export default function Header({ currentDate, view, onViewChange, onNavigate, on
         <button className="btn btn-icon" onClick={() => onNavigate(-1)}>‹</button>
         <button className="btn btn-icon" onClick={() => onNavigate(1)}>›</button>
         <h1 className="header-title">{title}</h1>
+        <button className="btn btn-danger" onClick={onClearAll}>Clear All</button>
       </div>
       <div className="header-right">
         <div className="view-toggle">

@@ -7,6 +7,7 @@ interface CalendarMonthProps {
   onDayClick: (date: string) => void;
   onEventClick: (event: InstanceEvent) => void;
   onToggleComplete: (event: InstanceEvent, date: string) => void;
+  onReschedule: (event: InstanceEvent, newDate: string) => void;
 }
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -22,7 +23,7 @@ function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-export default function CalendarMonth({ currentDate, events, onDayClick, onEventClick, onToggleComplete }: CalendarMonthProps) {
+export default function CalendarMonth({ currentDate, events, onDayClick, onEventClick, onToggleComplete, onReschedule }: CalendarMonthProps) {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const firstDay = new Date(year, month, 1);
@@ -74,11 +75,23 @@ export default function CalendarMonth({ currentDate, events, onDayClick, onEvent
                 key={iso}
                 className={`calendar-cell ${isCurrentMonth ? '' : 'other-month'} ${isToday ? 'today' : ''}`}
                 onClick={() => onDayClick(iso)}
+                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }}
+                onDragLeave={(e) => { e.currentTarget.classList.remove('drag-over'); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('drag-over');
+                  try {
+                    const data = JSON.parse(e.dataTransfer.getData('application/json'));
+                    if (data.event && data.displayDate !== iso && data.event.repeatDays > 0) {
+                      onReschedule(data.event, iso);
+                    }
+                  } catch {}
+                }}
               >
                 <span className={`cell-date ${isToday ? 'today-badge' : ''}`}>{day.getDate()}</span>
                 <div className="cell-events">
                   {dayEvents.map((ev) => (
-                    <EventCard key={ev.id} event={ev} displayDate={iso} onClick={onEventClick} onToggleComplete={onToggleComplete} />
+                    <EventCard key={ev.id} event={ev} displayDate={iso} onClick={onEventClick} onToggleComplete={onToggleComplete} onReschedule={onReschedule} />
                   ))}
                 </div>
               </div>

@@ -31,6 +31,8 @@ export default function App() {
   const expandedEvents = useMemo(() => {
     const rangeStart = new Date(currentDate);
     const rangeEnd = new Date(currentDate);
+    rangeStart.setHours(0, 0, 0, 0);
+    rangeEnd.setHours(23, 59, 59, 999);
     if (view === 'month') {
       rangeStart.setDate(1);
       rangeStart.setDate(rangeStart.getDate() - rangeStart.getDay());
@@ -49,15 +51,28 @@ export default function App() {
         continue;
       }
       const start = new Date(ev.date + 'T00:00:00');
+      const end = ev.repeatEndDate ? new Date(ev.repeatEndDate + 'T23:59:59') : null;
       const cursor = new Date(start);
+      if (cursor < rangeStart) {
+        const diffDays = Math.floor((rangeStart.getTime() - cursor.getTime()) / 86400000);
+        const skipCycles = Math.floor(diffDays / ev.repeatDays);
+        cursor.setDate(cursor.getDate() + skipCycles * ev.repeatDays);
+      }
       while (cursor <= rangeEnd) {
+        if (end && cursor > end) break;
         if (cursor >= rangeStart) {
           result.push({ ...ev, date: toISO(cursor), id: cursor.getTime() === start.getTime() ? ev.id : `${ev.id}_${toISO(cursor)}` });
         }
         cursor.setDate(cursor.getDate() + ev.repeatDays);
       }
     }
-    return result;
+    const seen = new Set<string>();
+    return result.filter((ev) => {
+      const key = `${ev.title}_${ev.date}_${ev.instanceType}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }, [events, currentDate, view]);
 
   const persist = useCallback((updated: InstanceEvent[]) => {
@@ -120,6 +135,12 @@ export default function App() {
     });
   }
 
+  function handleClearAll() {
+    if (window.confirm('Clear all events for this profile?')) {
+      persist([]);
+    }
+  }
+
   function handleToday() {
     setCurrentDate(new Date());
   }
@@ -166,6 +187,27 @@ export default function App() {
     setEditingEvent(null);
   }
 
+  function handleReschedule(displayEvent: InstanceEvent, newDate: string) {
+    const originalId = displayEvent.id.includes('_') ? displayEvent.id.split('_')[0] : displayEvent.id;
+    const original = events.find((e) => e.id === originalId);
+    if (!original) return;
+    const displayDate = new Date(displayEvent.date + 'T00:00:00');
+    const dayBefore = new Date(displayDate);
+    dayBefore.setDate(dayBefore.getDate() - 1);
+    const newEvent: InstanceEvent = {
+      ...original,
+      id: crypto.randomUUID(),
+      date: newDate,
+      repeatEndDate: undefined,
+      completedDates: original.completedDates.filter((d) => d >= newDate),
+    };
+    const updated = events.map((e) => {
+      if (e.id !== originalId) return e;
+      return { ...e, repeatEndDate: toISO(dayBefore), completedDates: e.completedDates.filter((d) => d < displayEvent.date) };
+    });
+    persist([...updated, newEvent]);
+  }
+
   return (
     <div className="app">
       <div className="top-bar">
@@ -184,6 +226,7 @@ export default function App() {
           onViewChange={setView}
           onNavigate={handleNavigate}
           onToday={handleToday}
+          onClearAll={handleClearAll}
         />
       </div>
       <main className="calendar-container">
@@ -194,6 +237,7 @@ export default function App() {
             onDayClick={handleDayClick}
             onEventClick={handleEventClick}
             onToggleComplete={handleToggleComplete}
+            onReschedule={handleReschedule}
           />
         ) : (
           <CalendarWeek
@@ -202,6 +246,7 @@ export default function App() {
             onDayClick={handleDayClick}
             onEventClick={handleEventClick}
             onToggleComplete={handleToggleComplete}
+            onReschedule={handleReschedule}
           />
         )}
       </main>

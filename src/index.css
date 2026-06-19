@@ -309,6 +309,13 @@ body {
   background: #f8f9fa;
 }
 
+.calendar-cell.drag-over,
+.week-day-column.drag-over {
+  background: #e8f0fe;
+  outline: 2px dashed #1a73e8;
+  outline-offset: -2px;
+}
+
 .calendar-cell.other-month {
   background: #f8f9fa;
 }
@@ -342,6 +349,7 @@ body {
 
 /* Event card */
 .event-card {
+  position: relative;
   padding: 2px 6px;
   font-size: 12px;
   border-radius: 3px;
@@ -350,7 +358,7 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  overflow: hidden;
+  overflow: visible;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -363,11 +371,13 @@ body {
   color: #5f6368;
   font-size: 11px;
   flex-shrink: 0;
+  pointer-events: none;
 }
 
 .event-title {
   overflow: hidden;
   text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 .event-completed .event-title {
@@ -375,24 +385,79 @@ body {
   color: #0d8043;
 }
 
-.event-edit-btn {
+.event-actions {
   display: none;
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  flex-direction: row;
+  gap: 0;
+  background: #fff;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  z-index: 20;
+  overflow: hidden;
+}
+
+.event-card:hover .event-actions {
+  display: flex;
+}
+
+.event-action-btn {
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
   color: #5f6368;
-  padding: 0 2px;
-  margin-left: auto;
-  flex-shrink: 0;
+  padding: 4px 8px;
+  line-height: 1;
 }
 
-.event-card:hover .event-edit-btn {
-  display: inline;
-}
-
-.event-edit-btn:hover {
+.event-action-btn:hover {
+  background: #e8eaed;
   color: #202124;
+}
+
+.event-action-btn + .event-action-btn {
+  border-left: 1px solid #dadce0;
+}
+
+.reschedule-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  padding: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+}
+
+.reschedule-picker input[type="date"] {
+  flex: 1;
+  border: 1px solid #dadce0;
+  border-radius: 3px;
+  padding: 3px 6px;
+  font-size: 12px;
+  min-width: 0;
+}
+
+.reschedule-confirm {
+  padding: 3px 8px !important;
+  font-size: 11px !important;
+}
+
+.reschedule-cancel {
+  padding: 3px 6px !important;
+  font-size: 11px !important;
+  border: none !important;
 }
 
 /* Repeat row */
